@@ -11,6 +11,7 @@ const schema = buildSchema(`
   type Query {
     post(id: Int!): Post
     posts: [Post]
+    createPost(title:String) : Post
   }
   type Post {
       id: Int
@@ -22,17 +23,30 @@ const schema = buildSchema(`
       user: String
   }
 `);
-
+let NEXT_ID = 4;
+class Post {
+    constructor(post){
+        Object.assign(this, post);
+        this.comments = post.comments || [];
+        this.id = NEXT_ID++;
+    }
+    async comments(){
+        return new Promise((resolve)=>{
+            setTimeout(() => {
+                resolve(
+                  [{
+                    text:"what is up",
+                    user:"Ina"
+                }]
+                );
+            }, 1000);
+        })
+    }
+}
 const posts = [
     {
         id:1,
         title: 'GraphQL',
-        comments:[
-            {
-            text:"what is up",
-            user:"Ina"
-        }
-        ]
     },
     {
         id:2,
@@ -62,12 +76,16 @@ const root = {
     //     return posts[id];
     //     }
     post: ({id}) => {
-        return posts.find(post => post.id===id);
+        return new Post(posts.find(post => post.id===id)); 
         },
     posts: ()=> {
-        return posts;
+        return posts.map(post=> new Post(post)); 
+    },
+    createPost: ({title})=>{
+        const post = new Post({title});
+        posts.push(post);
+        return post;
     }
-    
 };
  
 const app = express();
